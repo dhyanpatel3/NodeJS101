@@ -79,7 +79,7 @@ fs.unlink("./space_project/update.txt", (err) => {
   console.log("File deleted Successfully");
 });
 
-// Q8. Deleting File and Directory
+// Q8. 
 
 // i. Synchronous
 fs.rmdirSync("space_project");
