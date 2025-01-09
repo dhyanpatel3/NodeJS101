@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
 const https = require("https");
+const { URL } = require("url"); // Import URL module to easily work with URL parsing
 
 const DATA_FILE = path.join(__dirname, "url_checks.json");
 
@@ -38,6 +39,20 @@ function checkUrlAccessibility(url) {
                 resolve("Blocked");
             });
     });
+}
+
+// Function to extract query parameters from a URL
+function extractQueryParams(url) {
+    const parsedUrl = new URL(url); // Parse the URL
+    const params = new URLSearchParams(parsedUrl.search); // Get search params
+    const paramObject = {};
+
+    // Loop through parameters and convert to an object
+    params.forEach((value, key) => {
+        paramObject[key] = value;
+    });
+
+    return paramObject;
 }
 
 // CLI Interface
@@ -84,12 +99,22 @@ async function processUrl(url) {
 
     console.log("Checking URL...");
     const status = await checkUrlAccessibility(url);
-    const results = loadResults();
 
-    results.push({ url, status });
+    // If the URL is accessible, extract search parameters
+    let queryParams = {};
+    if (status === "Accessible") {
+        queryParams = extractQueryParams(url);
+    }
+
+    const results = loadResults();
+    results.push({ url, status, queryParams });
     saveResults(results);
 
     console.log(`URL: ${url}\nStatus: ${status}`);
+    if (status === "Accessible" && Object.keys(queryParams).length > 0) {
+        console.log("Search Parameters:", queryParams);
+    }
+
     showMenu();
 }
 
@@ -102,6 +127,12 @@ function viewResults() {
         console.log("\n--- URL Check Results ---");
         results.forEach((result, index) => {
             console.log(`${index + 1}. URL: ${result.url} | Status: ${result.status}`);
+            if (result.status === "Accessible") {
+                // If queryParams exist, display them; otherwise, skip
+                if (result.queryParams && Object.keys(result.queryParams).length > 0) {
+                    console.log("  Search Parameters:", result.queryParams);
+                }
+            }
         });
     }
     showMenu();
